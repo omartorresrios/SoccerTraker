@@ -47,33 +47,21 @@ class MatchTableViewController: UITableViewController, UIPickerViewDelegate, UIP
     }
     
     func fetchAllMatches() {
-        databaseRef.child("Matches").observe(.childAdded, with: { (snapshot) in
-            print("snapshot: ", snapshot)
-            if let dictionary = snapshot.value as? [String: AnyObject] {
-                guard let firstTeamDict = dictionary["Team1"] as? [String: AnyObject] else { return }
-                guard let secondTeamDict = dictionary["Team2"] as? [String: AnyObject] else { return }
-                let score = dictionary["score"] as? String ?? ""
-                
-                let match = Match(score: score, firstTeamDict: firstTeamDict, secondTeamDict: secondTeamDict)
-                self.matches.append(match)
-                
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
+        DataService.shared.fetchMatches { (matches) in
+            self.matches = matches
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
-        }, withCancel: nil)
+        }
     }
     
     func fetchAllTeams() {
-        databaseRef.child("Teams").observe(.childAdded, with: { (snapshot) in
-            if let teamDictionary = snapshot.value as? [String: AnyObject] {
-                let teamName = teamDictionary["name"] as! String
-                self.teams.append(teamName)
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
+        DataService.shared.fetchTeamNames { (teamNames) in
+            self.teams = teamNames
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
-        }, withCancel: nil)
+        }
     }
     
     func setupFloatButton() {
@@ -173,6 +161,7 @@ class MatchTableViewController: UITableViewController, UIPickerViewDelegate, UIP
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "matchCell", for: indexPath) as! MatchTableViewCell
         cell.matchData = matches[indexPath.row]
+        cell.match.text = "Partido \((indexPath.row) + 1)"
         return cell
     }
     
